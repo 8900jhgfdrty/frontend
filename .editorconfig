@@ -1,0 +1,26 @@
+# EditorConfig documentation: https://editorconfig.org (restart your editor after changes)
+
+# Indicate this is the root EditorConfig file
+root = true
+
+# Apply to all files
+[*]
+# Set the file character encoding
+charset = utf-8
+# Indentation style: “space” or “tab” (recommended: space)
+indent_style = space
+# Number of spaces per indent level
+indent_size = 2
+# Line ending style: “lf”, “cr”, or “crlf” (recommended: lf)
+end_of_line = lf
+# Ensure files end with a newline
+insert_final_newline = true
+# Remove trailing whitespace on each line
+trim_trailing_whitespace = true
+
+# Override settings for Markdown files
+[*.md]
+# Do not insert a final newline
+insert_final_newline = false
+# Do not trim trailing whitespace
+trim_trailing_whitespace = false
