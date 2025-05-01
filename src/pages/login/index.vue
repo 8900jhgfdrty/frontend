@@ -1,15 +1,19 @@
 <script lang="ts" setup>
 import type { FormInstance, FormRules } from "element-plus"
+import { usePermissionStore } from "@/pinia/stores/permission"
 import { useSettingsStore } from "@/pinia/stores/settings"
 import { useUserStore } from "@/pinia/stores/user"
 import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import { Key, Loading, Lock, Picture, User } from "@element-plus/icons-vue"
+import { useRouter } from "vue-router"
 import { loginApi, registerApi } from "./apis/index"
 import Owl from "./components/Owl.vue"
 import { useFocus } from "./composables/useFocus"
 
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 const settingsStore = useSettingsStore()
+const router = useRouter()
 const { isFocus, handleBlur, handleFocus } = useFocus()
 
 /** Reference to the login form */
@@ -51,7 +55,6 @@ function switchStatus() {
 
 /** Handle login or registration submission */
 async function handleLogin() {
-  debugger
   // Use await to validate the form
   const valid = await loginFormRef.value?.validate().catch(() => false)
   if (!valid) {
@@ -91,6 +94,7 @@ async function handleLogin() {
       } else {
         console.warn("Token missing in login response")
       }
+
       const userInfo = {
         username: String(data.username || ""),
         user_id: String(data.user_id || ""),
@@ -98,29 +102,66 @@ async function handleLogin() {
       }
       console.log("Setting user info:", userInfo)
       await userStore.getInfo(userInfo)
+
+      // 根据用户类型确定角色
+      let roles = []
+      switch (String(data.user_type)) {
+        case "0":
+          roles = ["user"]
+          break
+        case "1":
+          roles = ["admin"]
+          break
+        case "2":
+          roles = ["root"]
+          break
+        default:
+          roles = ["user"]
+      }
+
+      // 设置用户角色
+      userStore.setRoles(roles)
+
+      // 等待动态路由加载
+      await permissionStore.setRoutes(roles)
+      permissionStore.addRoutes.forEach((route) => {
+        router.addRoute(route)
+      })
+
       ElMessage.success("Login successful")
       console.log("Login successful, user type:", data.user_type)
+
+      // 使用 Vue Router 进行导航
       const userType = String(data.user_type || "0")
-
-      // 设置标记，避免路由守卫进行404检查
-      localStorage.setItem("just_logged_in", "true")
-
-      // 根据用户类型确定要跳转的页面，避免连续多次跳转
-      let targetUrl = "#/"
       if (userType === "2") {
         console.log("Redirecting to admin dashboard")
-        targetUrl = "#/dashboard/index"
+        await router.push("/dashboard/index")
+      } else {
+        await router.push("/")
       }
-      
-      // 使用单一跳转，避免导航冲突
-      window.location.href = `${window.location.origin + window.location.pathname}${targetUrl}`
+
       loading.value = false
     } else {
-      await registerApi({
+      const res = await registerApi({
         username: loginFormData.username,
         password: loginFormData.password
       })
 
+      // 检查响应中的成功状态
+      if (res.data && res.data.success === false) {
+        // 注册失败，显示错误信息
+        if (res.data.errors && res.data.errors.username) {
+          // 显示用户名错误
+          ElMessage.error(res.data.errors.username[0] || "Username error")
+        } else {
+          // 显示一般错误信息
+          ElMessage.error(res.data.message || "Registration failed")
+        }
+        loading.value = false
+        return
+      }
+
+      // 注册成功
       ElMessage.success("Registration successful, please log in")
       isLogin.value = true
       loading.value = false

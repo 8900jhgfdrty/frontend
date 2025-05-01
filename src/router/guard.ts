@@ -19,21 +19,17 @@ export function registerNavigationGuard(router: Router) {
   // Global before guard
   router.beforeEach(async (to, _from) => {
     NProgress.start()
-
     const userStore = useUserStore()
     const permissionStore = usePermissionStore()
     // First step: check the whitelist
     if (isWhiteList(to)) return true
-
     // Second step: check if logged in
     if (!getToken()) {
       return LOGIN_PATH
     }
-
     // If already logged in and trying to access the login page, redirect accordingly
     if (to.path === LOGIN_PATH) {
       const userInfo = getCacheUserInfo()
-
       // If system administrator (user_type = "2"), go to dashboard
       if (userInfo && userInfo.user_type === "2") {
         return "/dashboard"

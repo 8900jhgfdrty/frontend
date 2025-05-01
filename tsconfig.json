@@ -3,12 +3,12 @@
  * @link https://vuejs.org/guide/typescript/overview#configuring-tsconfig-json
  * @link https://vitejs.dev/guide/features#typescript-compiler-options
  */
- {
+{
   "compilerOptions": {
     "target": "esnext",
     "jsx": "preserve",
     "jsxImportSource": "vue",
-    "lib": ["esnext", "dom"],
+    "lib": ["esnext", "dom", "es2015"],
     "useDefineForClassFields": true,
     "experimentalDecorators": true,
 
