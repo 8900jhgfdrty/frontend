@@ -103,7 +103,6 @@ async function handleLogin() {
       console.log("Setting user info:", userInfo)
       await userStore.getInfo(userInfo)
 
-      // 根据用户类型确定角色
       let roles = []
       switch (String(data.user_type)) {
         case "0":
@@ -119,10 +118,8 @@ async function handleLogin() {
           roles = ["user"]
       }
 
-      // 设置用户角色
       userStore.setRoles(roles)
 
-      // 等待动态路由加载
       await permissionStore.setRoutes(roles)
       permissionStore.addRoutes.forEach((route) => {
         router.addRoute(route)
@@ -131,7 +128,6 @@ async function handleLogin() {
       ElMessage.success("Login successful")
       console.log("Login successful, user type:", data.user_type)
 
-      // 使用 Vue Router 进行导航
       const userType = String(data.user_type || "0")
       if (userType === "2") {
         console.log("Redirecting to admin dashboard")
@@ -147,21 +143,16 @@ async function handleLogin() {
         password: loginFormData.password
       })
 
-      // 检查响应中的成功状态
       if (res.data && res.data.success === false) {
-        // 注册失败，显示错误信息
         if (res.data.errors && res.data.errors.username) {
-          // 显示用户名错误
           ElMessage.error(res.data.errors.username[0] || "Username error")
         } else {
-          // 显示一般错误信息
           ElMessage.error(res.data.message || "Registration failed")
         }
         loading.value = false
         return
       }
 
-      // 注册成功
       ElMessage.success("Registration successful, please log in")
       isLogin.value = true
       loading.value = false
